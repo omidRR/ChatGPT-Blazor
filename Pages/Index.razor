@@ -1,0 +1,288 @@
+﻿@page "/"
+<PageTitle>صفحه اصلی</PageTitle>
+
+
+<style>
+    textarea {
+        border: 1px dashed #888;
+        border-radius: 5px;
+        width: 80%;
+        overflow: auto;
+        background: #f7f7f7
+    }
+
+    /* improved CSS for speech bubbles */
+
+    .assistant, .user {
+        position: relative;
+        font-family: arial;
+        font-size: 1.1em;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+        .assistant:after, .user:after {
+            content: '';
+            border: 20px solid transparent;
+            position: absolute;
+            margin-top: -30px;
+        }
+
+    .user {
+        background: #03a9f4;
+        color: #fff;
+        margin-left: 20%;
+        margin-right: 100px;
+        top: 30%;
+        text-align: right;
+    }
+
+    .assistant {
+        background: #4CAF50;
+        color: #fff;
+        margin-left: 100px;
+        margin-right: 20%;
+    }
+
+    .user:after {
+        border-left-color: #03a9f4;
+        border-right: 0;
+        right: -20px;
+    }
+
+    .assistant:after {
+        border-right-color: #4CAF50;
+        border-left: 0;
+        left: -20px;
+    }
+
+    .msg {
+        font-size: medium;
+    }
+</style>
+
+
+
+<MudContainer Class="chatcontainer mt-16" MaxWidth="MaxWidth.Medium">
+    <MudText Typo="Typo.h6" Align="Align.Center" GutterBottom="true">ربات هوش مصنوعی ChatGPT</MudText>
+    @foreach (var item in _messages)
+    {
+        <div>
+            @if (item.Role == "user")
+            {
+                <div style="float: right; margin-right: 20px; margin-top: 10px">
+                    <MudIconButton Icon="@Icons.Material.Filled.Person" Color="Color.Primary" Disabled="true" aria-label="کاربر"></MudIconButton>
+                </div>
+                <div class="@item.Role">
+                    <div class="msg">
+                        @item.Prompt
+                        <br /><br />
+                        <div style="font-size: xx-small;">
+                            <i><b>(@item.Tokens)</b> توکن مصرف شده</i>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div style="float: left; margin-left: 20px; margin-top: 10px">
+                    <MudIconButton Icon="@Icons.Material.Filled.FilterDrama" Color="Color.Success" Disabled="true" aria-label="کاربر">ok</MudIconButton>
+                </div>
+                <div class="@item.Role">
+                    <div class="msg">
+                        @if (item.Prompt != null)
+                        {
+                            @((MarkupString)item.Prompt)
+                        }
+                        <br /><br />
+                        <div style="font-size: xx-small;">
+                            <i><b>(@item.Tokens)</b> توکن مصرف شده</i>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</MudContainer>
+
+<MudCard>
+    <MudCardContent>
+        @if (!_processing)
+        {
+            <MudTextField T="string" Class="" Label="سوالت رو اینجا بپرس ..." AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" @bind-Text="_prompt" Lines="5" HelperText=" کاربران گرامی، نتایج جستجو شده متعلق به ربات ChatGPT است و این سایت هیچگونه مسئولیتی در قبال این دیتا ندارد." />
+
+            <br />
+            <MudButton StartIcon="@Icons.Material.Filled.Search" Color="Color.Primary" Variant="Variant.Filled" OnClick="CallChatGpt">گفتگو</MudButton>
+            <span>&nbsp;</span>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="RestartChatGpt">ایجاد گفتگوی جدید</MudButton>
+            <MudMessageBox @ref="Mbox">
+                <MessageContent>
+                    <h3>در صورت تایید گفتگوی جدید ایجاد میشود ، و گفتگوی قبلی حذف میشود.</h3>
+                </MessageContent>
+                <NoButton>
+                    <MudButton Color="Color.Info" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Info">منصرف شدم</MudButton>
+                </NoButton>
+                <YesButton>
+                    <MudButton Color="Color.Error" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.DeleteForever">حذفش کن بره!</MudButton>
+                </YesButton>
+            </MudMessageBox>
+        }
+        else
+        {
+            <br>
+            <MudCard>
+                <MudCardContent>
+                    <MudText Align="Align.Center">درخواست شما در حال پردازش میباشد...</MudText>
+                    <MudProgressLinear Color="Color.Info" Indeterminate="true" Class="my-7" />
+                </MudCardContent>
+            </MudCard>
+
+        }
+        <br />
+      @*  <MudText Typo="Typo.body1" Align="Align.Center">تعداد توکن های مصرفی: @_totalTokens</MudText>*@
+        
+        <div align="center">
+            <MudChip Variant="Variant.Text" Color="Color.Info">تعداد توکن های مصرفی: @_totalTokens</MudChip>
+        </div>
+        @{
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
+            Snackbar.Configuration.SnackbarVariant = Variant.Filled;
+            if (_errorMessage.Contains("invalid_api_key"))
+            {
+                Snackbar.Add("خطای داخلی : توکن احراز هویت اشتباه میباشد.", Severity.Error);
+                return;
+            }
+            if (_errorMessage == "No such host is known. (api.openai.com:443)")
+            {
+                Snackbar.Add("خطا در برقراری ارتباط با سرور", Severity.Error);
+                return;
+            }
+            Snackbar.Add(@_errorMessage, Severity.Error);
+            if (_errorMessage == "")
+            {
+                return;
+            }
+        }
+
+    </MudCardContent>
+</MudCard>
+@code {
+    string _organization = "";
+    string _apiKey = "";
+
+    List<Message> _messages = new List<Message>();
+    string _prompt = "";
+    string _errorMessage = "";
+    bool _processing = false;
+    int _totalTokens = 0;
+
+    protected override void OnInitialized()
+    {
+        _organization = Configuration["OpenAIServiceOptions:Organization"] ?? "";
+        _apiKey = Configuration["OpenAIServiceOptions:ApiKey"] ?? "";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            await JsRuntime.InvokeAsync<string>("ScrollToBottom", "chatcontainer");
+        }
+        catch
+        {
+            // do nothing if this fails
+        }
+    }
+
+    async Task CallChatGpt()
+    {
+        try
+        {
+            if (_prompt == "")
+            {
+                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
+                Snackbar.Configuration.SnackbarVariant = Variant.Filled;
+                Snackbar.Add("متن وارد کنید", Severity.Error);
+                return;
+            }
+            _processing = true;
+
+
+            StateHasChanged();
+
+
+            _errorMessage = "";
+
+
+            var api = new OpenAIClient(new OpenAIAuthentication(_apiKey, _organization));
+
+            var chatPrompts = new List<ChatPrompt>();
+            chatPrompts.Add(new ChatPrompt("system", "You are helpful Assistant"));
+
+            foreach (var item in _messages)
+            {
+                chatPrompts.Add(new ChatPrompt(item.Role, item.Prompt));
+            }
+
+            chatPrompts.Add(new ChatPrompt("user", _prompt));
+
+            var chatRequest = new ChatRequest(chatPrompts);
+            var result = await api.ChatEndpoint.GetCompletionAsync(chatRequest);
+            _messages.Add(new Message
+                {
+                    Prompt = _prompt,
+                    Role = "user",
+                    Tokens = result.Usage.PromptTokens
+                });
+
+            _messages.Add(new Message
+                {
+                    Prompt = result.FirstChoice.Message,
+                    Role = "assistant",
+                    Tokens = result.Usage.CompletionTokens
+                });
+
+            _totalTokens = _totalTokens + result.Usage.TotalTokens;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _prompt = "";
+
+            _processing = false;
+
+            StateHasChanged();
+        }
+    }
+
+    async Task RestartChatGpt()
+    {
+        bool? result = await Mbox?.Show()!;
+        if (result == true)
+        {
+            _prompt = "";
+            _messages = new List<Message>();
+            _totalTokens = 0;
+            _errorMessage = "";
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
+            Snackbar.Configuration.SnackbarVariant = Variant.Text;
+            Snackbar.Add("گفتگو با موفقیت حذف شد", Severity.Success);
+        }
+
+
+        StateHasChanged();
+    }
+    MudMessageBox? Mbox { get; set; }
+
+    public class Message
+    {
+        public string? Prompt { get; set; }
+        public string? Role { get; set; }
+        public int Tokens { get; set; }
+    }
+
+}

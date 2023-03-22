@@ -1,0 +1,10 @@
+﻿@page "/"
+@using Chat_GPT_ASP.NET
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@namespace Chat_GPT_ASP.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = "_Layout";
+}
+
+<component type="typeof(App)" render-mode="ServerPrerendered"/>
