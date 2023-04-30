@@ -10,7 +10,7 @@ StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configurat
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddMudServices();
-builder.Services.AddMudMarkdownServices();    
+builder.Services.AddMudMarkdownServices();
 
 var app = builder.Build();
 

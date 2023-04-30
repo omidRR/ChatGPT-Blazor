@@ -2,33 +2,33 @@
     font-family: 'vazir';
     src: url('../fonts/vazir.ttf') format('truetype');
 }
-* {
-    font-family: 'vazir';
-}
+
+* { font-family: 'vazir'; }
+
 textarea {
+    background: #f7f7f7;
     border: 1px dashed #888;
     border-radius: 5px;
-    width: 80%;
     overflow: auto;
-    background: #f7f7f7
+    width: 80%;
 }
 
 /* improved CSS for speech bubbles */
 
 .assistant, .user {
-    position: relative;
+    border-radius: 10px;
     font-family: vazir;
     font-size: 1.1em;
-    border-radius: 10px;
-    padding: 20px;
     margin-bottom: 20px;
+    padding: 20px;
+    position: relative;
 }
 
 .assistant:after, .user:after {
-    content: '';
     border: 20px solid transparent;
-    position: absolute;
+    content: '';
     margin-top: -30px;
+    position: absolute;
 }
 
 .user {
@@ -36,8 +36,8 @@ textarea {
     color: #fff;
     margin-left: 20%;
     margin-right: 10%;
-    top: 30%;
     text-align: right;
+    top: 30%;
 }
 
 .assistant {
@@ -54,11 +54,9 @@ textarea {
 }
 
 .assistant:after {
-    border-right-color: #4CAF50;
     border-left: 0;
+    border-right-color: #4CAF50;
     left: -20px;
 }
 
-.msg {
-    font-size: medium;
-}
+.msg { font-size: medium; }
