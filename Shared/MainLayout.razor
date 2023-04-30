@@ -1,20 +1,22 @@
 ﻿@inherits LayoutComponentBase
-<MudRTLProvider RightToLeft="true">
-    <MudThemeProvider @bind-IsDarkMode="@isDarkMode" />
+<MudRTLProvider RightToLeft="@_rightToLeft">
+    <MudThemeProvider @bind-IsDarkMode="@IsDarkMode" Theme="MyCustomTheme" />
     <MudDialogProvider />
     <MudSnackbarProvider />
     <MudLayout>
         <MudAppBar Elevation="0">
-            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-            <MudSpacer />
-            <MudSwitch @bind-Checked="@isDarkMode" ThumbIcon="@(isDarkMode==true ? @Icons.Material.Filled.DarkMode : @Icons.Material.Filled.LightMode)" ThumbIconColor="@(isDarkMode==true ? Color.Success : Color.Error)"></MudSwitch>
-            <MudIconButton Icon="@Icons.Custom.Brands.Telegram" Color="Color.Inherit" Link="https://telegram.me/sabzi_khoreshti" Target="_blank" />
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
+            <MudSpacer/>
+            <MudSwitch @bind-Checked="@IsDarkMode" ThumbIcon="@(IsDarkMode == true ? @Icons.Material.Filled.DarkMode : @Icons.Material.Filled.LightMode)" ThumbIconColor="@(IsDarkMode == true ? Color.Success : Color.Error)"></MudSwitch>
+            <MudSwitch @bind-Checked="@_rightToLeft" Label="تغییر جهت صفحه" Color="Color.Primary" />
+
+            <MudIconButton Icon="@Icons.Custom.Brands.Telegram" Color="Color.Inherit" Link="https://telegram.me/sabzi_khoreshti" Target="_blank"/>
         </MudAppBar>
-        <MudDrawer  @bind-Open="_drawerOpen" Elevation="0">
+        <MudDrawer @bind-Open="_drawerOpen" Elevation="0">
             <MudDrawerHeader>
-                <MudText Typo="Typo.h6">CHATGPT</MudText>
+                <MudText Typo="Typo.h6" >CHATGPT</MudText>
             </MudDrawerHeader>
-            <NavMenu />
+            <NavMenu/>
         </MudDrawer>
         <MudMainContent>
             <MudContainer MaxWidth="MaxWidth.Large" Class="my-40 pt-40">
@@ -24,14 +26,26 @@
         </MudMainContent>
     </MudLayout>
 </MudRTLProvider>
-
 @code {
+    MudTheme MyCustomTheme = new MudTheme()
+        {
+            Typography = new Typography()
+            {
+                Default = new Default()
+                {
+                    FontFamily = new[] { "vazir", "Helvetica", "Arial", "sans-serif" }
+                }
+            }
+        };
     bool _drawerOpen = false;
 
     void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
     }
-    public bool isDarkMode { get; set; } = true;
+    public bool IsDarkMode { get; set; } = true;
 
+}
+@code {
+    private bool _rightToLeft = true;
 }
