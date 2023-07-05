@@ -17,11 +17,10 @@
                 <div class="@item.Role">
                     <div class="msg">
                         @((MarkupString)Markdown.ToHtml(item.Prompt, markdownPipeline))
-                        <br/><br/>
+                        <br/>
                         <div style="font-size: xx-small;">
                             <i><b>(@item.Tokens)</b> توکن مصرف شده</i>
-                            <br/>
-                            <MudText Align="Align.Left" Typo="Typo.caption">@item.Date</MudText>
+                            <MudText Style="float: left" Typo="Typo.caption">@item.Date</MudText>
                         </div>
                     </div>
                 </div>
@@ -39,11 +38,10 @@
                             @((MarkupString)Markdown.ToHtml(item.Prompt, markdownPipeline))
                         }
 
-                        <br/><br/>
+                        <br/>
                         <div style="font-size: xx-small;">
                             <i><b>(@item.Tokens)</b> توکن مصرف شده</i>
-                            <br/>
-                            <MudText Align="Align.Left" Typo="Typo.caption">@item.Date</MudText>
+                            <MudText Style="float: left" Typo="Typo.caption">@item.Date</MudText>
                         </div>
                     </div>
                 </div>
@@ -141,7 +139,7 @@
     {
         try
         {
-            await JsRuntime.InvokeAsync<string>("ScrollToBottom", "chatcontainer");
+            //await JsRuntime.InvokeAsync<string>("ScrollToBottom", "chatcontainer");
         }
         catch
         {
