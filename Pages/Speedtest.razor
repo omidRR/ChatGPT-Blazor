@@ -1,0 +1,188 @@
+﻿@page "/speedtest"
+@using System.Net.NetworkInformation
+@using System.Diagnostics
+@inject HttpClient httpClient
+
+<MudContainer>
+    <MudPaper Elevation="2" Class="p-4">
+        <MudGrid>
+            <MudItem xs="12" sm="12" md="12">
+                <MudText Typo="Typo.h4" Align="Align.Center">آزمایش سرعت</MudText>
+            </MudItem>
+            <MudItem xs="12" sm="12" md="12">
+                <MudText Align="Align.Center">برای آزمایش سرعت اتصال اینترنت خود، روی دکمه‌های زیر کلیک کنید</MudText>
+            </MudItem>
+            <MudItem xs="12" sm="12" md="12" Class="mt-2" Align="Center">
+                <MudButton Disabled="@_processing" OnClick="TestPing" Variant="Variant.Filled" Color="Color.Primary">
+                    @if (_processing)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                        <MudText Class="ms-2">در حال پردازش</MudText>
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.NetworkCheck" Class="mr-1"/>
+                        <MudText>آزمایش پینگ</MudText>
+                    }
+                </MudButton>
+                <MudButton Disabled="@_downloadProcessing" OnClick="TestDownloadSpeed" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">
+                    @if (_downloadProcessing)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                        <MudText Class="ms-2">در حال پردازش</MudText>
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.GetApp" Class="mr-1"/>
+                        <MudText>آزمایش سرعت دانلود</MudText>
+                    }
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" sm="12" md="12" Class="mt-4">
+                <MudGrid Justify="Justify.SpaceAround">
+                    @if (!string.IsNullOrEmpty(_ipAddress))
+                    {
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <MudChip Color="Color.Secondary">
+                                <MudTypography>آدرس IP شما: <span class="font-weight-bold">@_ipAddress</span></MudTypography>
+                            </MudChip>
+                        </MudItem>
+                    }
+
+                    @if (_pingResult != null)
+                    {
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <MudChip Color="Color.Secondary">
+                                <MudTypography>زمان پینگ: <span class="font-weight-bold">@_pingResult میلی‌ثانیه</span></MudTypography>
+                            </MudChip>
+                        </MudItem>
+                    }
+
+                    @if (_downloadSpeed != null)
+                    {
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <MudChip Color="Color.Secondary">
+                                <MudTypography>سرعت دانلود فعلی: <span class="font-weight-bold">@_downloadSpeed مگ بر ثانیه</span></MudTypography>
+                            </MudChip>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudItem>
+            <MudItem xs="12" sm="12" md="12" Class="mt-4">
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true">@_errorMessage</MudAlert>
+                }
+
+                @if (!string.IsNullOrEmpty(_waitMessage))
+                {
+                    <MudAlert Severity="Severity.Warning" Dense="true">@_waitMessage</MudAlert>
+                }
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string _ipAddress;
+    private double? _pingResult;
+    private double? _downloadSpeed;
+    private string _errorMessage;
+    private string _waitMessage;
+    private bool _downloadInProgress;
+    private bool _processing;
+    private bool _downloadProcessing;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetIpAddress();
+    }
+
+    private async Task GetIpAddress()
+    {
+        try
+        {
+            _ipAddress = await httpClient.GetStringAsync("https://api.ipify.org");
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"خطا در دریافت آدرس IP: {ex.Message}";
+        }
+    }
+
+    private async Task TestPing()
+    {
+        _processing = true;
+
+        _errorMessage = string.Empty;
+
+        try
+        {
+            var ping = new Ping();
+            var pingReply = await ping.SendPingAsync("www.google.com");
+            _pingResult = pingReply?.RoundtripTime;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"خطا: {ex.Message}";
+        }
+
+        _processing = false;
+    }
+
+    private async Task TestDownloadSpeed()
+    {
+        if (_downloadInProgress)
+        {
+            _waitMessage = "لطفاً برای پایان آزمایش سرعت دانلود قبلی صبر کنید.";
+            return;
+        }
+
+        _downloadProcessing = true;
+        _waitMessage = string.Empty;
+        _errorMessage = string.Empty;
+        _downloadInProgress = true;
+
+        try
+        {
+            var stopwatch = new Stopwatch();
+            var downloadUrl = "http://cachefly.cachefly.net/10mb.test";
+            var downloadBytes = 0;
+            var buffer = new byte[4096];
+            var numSegments = 3;
+            var segmentSize = 900_000; // دانلود 100 کیلوبایت در هر بخش
+
+            for (var i = 0; i < numSegments; i++)
+            {
+                var stopwatchDownload = new Stopwatch();
+                stopwatchDownload.Start();
+                using (var stream = await httpClient.GetStreamAsync(downloadUrl))
+                {
+                    var read = 0;
+                    var bytesReadForSegment = 0;
+                    while ((read = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0 && bytesReadForSegment < segmentSize)
+                    {
+                        downloadBytes += read;
+                        bytesReadForSegment += read;
+                    }
+                }
+                stopwatchDownload.Stop();
+
+    // محاسبه سرعت برای بخش دانلود شده و به‌روزرسانی آن به صورت زنده
+                _downloadSpeed = Math.Round(downloadBytes / stopwatchDownload.Elapsed.TotalSeconds / 1_000_000, 2);
+                StateHasChanged(); // مجبور کردن رابط کاربری به به‌روزرسانی
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"خطا: {ex.Message}";
+        }
+        finally
+        {
+            _downloadInProgress = false;
+            _downloadProcessing = false;
+        }
+    }
+
+}

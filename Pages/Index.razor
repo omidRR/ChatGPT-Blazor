@@ -135,82 +135,82 @@
         _apiKey = Configuration["OpenAIServiceOptions:ApiKey"] ?? "";
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        try
-        {
-            //await JsRuntime.InvokeAsync<string>("ScrollToBottom", "chatcontainer");
-        }
-        catch
-        {
-    // do nothing if this fails
-        }
-    }
+    //protected override async Task OnAfterRenderAsync(bool firstRender)
+    //{
+    //    try
+    //    {
+    //        //await JsRuntime.InvokeAsync<string>("ScrollToBottom", "chatcontainer");
+    //    }
+    //    catch
+    //    {
+    //// do nothing if this fails
+    //    }
+    //}
 
-    public async Task CallChatGpt()
+    private async Task CallChatGpt()
     {
         try
         {
-            if (_prompt == "")
+            _errorMessage = "";
+            if (string.IsNullOrEmpty(_prompt))
             {
-                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
-                Snackbar.Configuration.SnackbarVariant = Variant.Filled;
-                Snackbar.Add("متن وارد کنید", Severity.Error);
+                ShowError("متن وارد کنید");
                 return;
             }
+
             _processing = true;
 
-
-            StateHasChanged();
-
-
-            _errorMessage = "";
-
-
             var api = new OpenAIClient(new OpenAIAuthentication(_apiKey, _organization));
-            var chatPrompts = new List<ChatPrompt>();
-            chatPrompts.Add(new ChatPrompt("system", $"{TextRule}"));
+            var chatPrompts = CreateChatPrompts();
 
+            var result = await api.ChatEndpoint.GetCompletionAsync(new ChatRequest(chatPrompts));
 
-            foreach (var item in _messages)
-            {
-                chatPrompts.Add(new ChatPrompt(item.Role, item.Prompt));
-            }
+            AddMessage(_prompt, "user", result.Usage.PromptTokens);
+            AddMessage(result.FirstChoice.Message, "assistant", result.Usage.CompletionTokens);
 
-            chatPrompts.Add(new ChatPrompt("user", _prompt));
-
-            var chatRequest = new ChatRequest(chatPrompts);
-            var result = await api.ChatEndpoint.GetCompletionAsync(chatRequest);
-            _messages.Add(new Message
-            {
-                Prompt = _prompt,
-                Role = "user",
-                Tokens = result.Usage.PromptTokens,
-                Date = DateTime.Now.ToString("T", new CultureInfo("fa-IR"))
-            });
-
-            _messages.Add(new Message
-            {
-                Prompt = result.FirstChoice.Message,
-                Role = "assistant",
-                Tokens = result.Usage.CompletionTokens,
-                Date = DateTime.Now.ToString("T", new CultureInfo("fa-IR"))
-            });
-
-            _totalTokens = _totalTokens + result.Usage.TotalTokens;
+            _totalTokens += result.Usage.TotalTokens;
         }
         catch (Exception ex)
         {
             _errorMessage = ex.Message;
+            Console.WriteLine(ex.ToString());
         }
         finally
         {
             _prompt = "";
-
             _processing = false;
-
-            StateHasChanged();
         }
+    }
+
+    private void ShowError(string message)
+    {
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
+        Snackbar.Configuration.SnackbarVariant = Variant.Filled;
+        Snackbar.Add(message, Severity.Error);
+    }
+
+    private List<ChatPrompt> CreateChatPrompts()
+    {
+        var chatPrompts = new List<ChatPrompt>
+        {
+            new("system", $"{TextRule}")
+        };
+
+        chatPrompts.AddRange(_messages.Select(item => new ChatPrompt(item.Role, item.Prompt)));
+        chatPrompts.Add(new ChatPrompt("user", _prompt));
+
+        return chatPrompts;
+    }
+
+    private void AddMessage(string prompt, string role, int tokens)
+    {
+        _messages.Add(new Message
+        {
+            Prompt = prompt,
+            Role = role,
+            Tokens = tokens,
+            Date = DateTime.Now.ToString("T", new CultureInfo("fa-IR"))
+        });
     }
 
     async Task RestartChatGpt()

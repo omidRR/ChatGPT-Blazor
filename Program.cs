@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using MudBlazor;
 using MudBlazor.Services;
@@ -11,7 +12,9 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddMudServices();
 builder.Services.AddMudMarkdownServices();
-
+builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddBlazoredLocalStorage();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

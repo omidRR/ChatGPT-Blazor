@@ -5,6 +5,11 @@
 	  <Nullable>enable</Nullable>
 	  <ImplicitUsings>enable</ImplicitUsings>
 	  <Version>1.1.0</Version>
+	  <UserSecretsId>78478765-2aec-449d-b0f3-4d2db428fe27</UserSecretsId>
+	  <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+	  <DockerfileContext>.</DockerfileContext>
+	  <DockerComposeProjectPath>docker-compose.dcproj</DockerComposeProjectPath>
+	  <EnableSdkContainerSupport>true</EnableSdkContainerSupport>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,8 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MudBlazor" Version="6.6.0" />
-    <PackageReference Include="MudBlazor.Extensions" Version="1.7.60" />
+    <PackageReference Include="Blazored.LocalStorage" Version="4.3.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.18.1" />
+    <PackageReference Include="MudBlazor" Version="6.7.0" />
+    <PackageReference Include="MudBlazor.Extensions" Version="1.7.64-d2307191235" />
     <PackageReference Include="MudBlazor.Markdown" Version="0.1.1" />
     <PackageReference Include="MudBlazor.ThemeManager" Version="1.0.8" />
     <PackageReference Include="OpenAI-DotNet" Version="6.6.0" />
