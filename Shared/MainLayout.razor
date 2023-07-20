@@ -1,49 +1,50 @@
 ﻿@inherits LayoutComponentBase
 <MudRTLProvider RightToLeft="@_rightToLeft">
-    <MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="MyCustomTheme"/>
-    <MudDialogProvider/>
-    <MudSnackbarProvider/>
+    <MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="MyCustomTheme" />
+    <MudDialogProvider />
+    <MudSnackbarProvider />
     <MudLayout>
         <MudAppBar Elevation="0">
-            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@(e => DrawerToggle())"/>
-            <MudSpacer/>
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@(e => DrawerToggle())" />
+            <MudSpacer />
             @if (_isDarkMode)
             {
-                <MudIconButton Icon="@Icons.Material.Filled.LightMode" Color="Color.Inherit" OnClick="@(async e => await DoLightMode())"/>
+                <MudIconButton Icon="@Icons.Material.Filled.LightMode" Color="Color.Inherit" OnClick="@(async (e) => await DoLightMode())" />
             }
             else
             {
-                <MudIconButton Icon="@Icons.Material.Filled.DarkMode" Color="Color.Inherit" OnClick="@(async e => await DoDarkMode())"/>
+                <MudIconButton Icon="@Icons.Material.Filled.DarkMode" Color="Color.Inherit" OnClick="@(async (e) => await DoDarkMode())" />
             }
             <MudIconButton Variant="Variant.Text" Icon="@Icons.Material.Filled.ImportExport" OnClick="@ToggleDirection">@(_rightToLeft ? "RTL" : "LTR")</MudIconButton>
 
-            <MudIconButton Icon="@Icons.Custom.Brands.Telegram" Color="Color.Inherit" Href="https://telegram.me/sabzi_khoreshti" Target="_blank"/>
-        </MudAppBar>
-        <MudDrawer @bind-Open="_drawerOpen" Elevation="0">
-            <MudDrawerHeader>
-                <MudText Typo="Typo.h6">CHATGPT</MudText>
-            </MudDrawerHeader>
-            <NavMenu/>
-        </MudDrawer>
-        <MudMainContent>
-            <MudContainer MaxWidth="MaxWidth.Large" Class="my-40 pt-40">
-                @if (LoadingForFirstLoad)
+                <MudIconButton Icon="@Icons.Custom.Brands.Telegram" Color="Color.Inherit" Href="https://telegram.me/sabzi_khoreshti" Target="_blank" />
+            </MudAppBar>
+            <MudDrawer @bind-Open="_drawerOpen" Elevation="0">
+                <MudDrawerHeader>
+                    <MudText Typo="Typo.h6">CHATGPT</MudText>
+                </MudDrawerHeader>
+                <NavMenu />
+            </MudDrawer>
+            <MudMainContent>
+                <MudContainer MaxWidth="MaxWidth.Large" Class="my-40 pt-40">
+                    @if (LoadingForFirstLoad)
                 {
                     <MudPaper Class="d-flex justify-center flex-grow-1 gap-4" Elevation="0">
-                        <MudProgressLinear Color="Color.Primary" Size="Size.Small" Indeterminate="true"/>
+                        <MudProgressLinear Color="Color.Primary" Size="Size.Small" Indeterminate="true" />
                     </MudPaper>
                     <MudCard>
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px"/>
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px" />
                         <MudCardContent>
-                            <MudSkeleton Width="30%" Height="42px;"/>
-                            <MudSkeleton Width="80%"/>
-                            <MudSkeleton Width="100%"/>
+                            <MudSkeleton Width="30%" Height="42px;" />
+                            <MudSkeleton Width="80%" />
+                            <MudSkeleton Width="100%" />
                         </MudCardContent>
                         <MudCardActions>
-                            <MudSkeleton Width="64px" Height="40px" Class="ml-2"/>
-                            <MudSkeleton Width="105px" Height="40px" Class="ml-3"/>
+                            <MudSkeleton Width="64px" Height="40px" Class="ml-2" />
+                            <MudSkeleton Width="105px" Height="40px" Class="ml-3" />
                         </MudCardActions>
                     </MudCard>
+
                 }
                 else
                 {
@@ -59,15 +60,15 @@
 @code {
 
     readonly MudTheme MyCustomTheme = new()
-    {
-        Typography = new Typography
         {
-            Default = new Default
+            Typography = new Typography
             {
-                FontFamily = new[] { "vazir", "Helvetica", "Arial", "sans-serif" }
+                Default = new Default
+                {
+                    FontFamily = new[] { "vazir", "Helvetica", "Arial", "sans-serif" }
+                }
             }
-        }
-    };
+        };
 
     bool _drawerOpen;
 
@@ -79,7 +80,6 @@
     private bool _isDarkMode = true;
 
     private bool _rightToLeft = true;
-
     async Task DoDarkMode()
     {
         try
@@ -89,18 +89,17 @@
         }
         catch
         {
-    // ignored
+            // ignored
         }
     }
-
     private bool LoadingForFirstLoad = true;
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         try
         {
             if (firstRender)
             {
+
                 var resRTL = await localStorage.GetItemAsync<string>("rtlStatus");
                 if (resRTL is null)
                 {
@@ -119,7 +118,7 @@
         {
             LoadingForFirstLoad = false;
             StateHasChanged();
-    // ignored
+            // ignored
         }
     }
 
@@ -132,7 +131,7 @@
         }
         catch
         {
-    // ignored
+            // ignored
         }
     }
 
@@ -164,7 +163,7 @@
         }
         catch
         {
-    // ignored
+            // ignored
         }
     }
 

@@ -57,10 +57,14 @@
             <MudTextField T="string" Class="" Label="سوالت رو اینجا بپرس ..." AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" @bind-Text="_prompt" Lines="5" HelperText=" کاربران گرامی، نتایج جستجو شده متعلق به ربات ChatGPT است و این سایت هیچگونه مسئولیتی در قبال این دیتا ندارد."/>
 
             <br/>
+          
+                    <MudFab StartIcon="@Icons.Material.Filled.Search" Label="گفتگو" Color="Color.Primary" OnClick="Def">گفتگو</MudFab>
+                    <MudFab StartIcon="@Icons.Material.Filled.LockOpen" Color="Color.Dark" Label="گفتگوی آزاد" OnClick="Free">گفتگوی آزاد</MudFab>
 
-            <MudButton Class="ml-1" StartIcon="@Icons.Material.Filled.Search" Color="Color.Primary" Variant="Variant.Filled" OnClick="Def">گفتگو</MudButton>
-            <MudButton StartIcon="@Icons.Material.Filled.LockOpen" Color="Color.Dark" Variant="Variant.Filled" OnClick="Free">گفتگوی آزاد</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.Autorenew" OnClick="RestartChatGpt">ایجاد گفتگوی جدید</MudButton>
+                    <MudFab Color="Color.Error" StartIcon="@Icons.Material.Filled.Autorenew" Size="Size.Medium" OnClick="RestartChatGpt"></MudFab>
+            
+           
+       
 
             @*            <span>&nbsp;</span>
         *@
@@ -148,70 +152,71 @@
     //}
 
     private async Task CallChatGpt()
+{
+    try
     {
-        try
+        if (string.IsNullOrEmpty(_prompt))
         {
-            _errorMessage = "";
-            if (string.IsNullOrEmpty(_prompt))
-            {
-                ShowError("متن وارد کنید");
-                return;
-            }
-
-            _processing = true;
-
-            var api = new OpenAIClient(new OpenAIAuthentication(_apiKey, _organization));
-            var chatPrompts = CreateChatPrompts();
-
-            var result = await api.ChatEndpoint.GetCompletionAsync(new ChatRequest(chatPrompts));
-
-            AddMessage(_prompt, "user", result.Usage.PromptTokens);
-            AddMessage(result.FirstChoice.Message, "assistant", result.Usage.CompletionTokens);
-
-            _totalTokens += result.Usage.TotalTokens;
+            ShowError("متن وارد کنید");
+            return;
         }
-        catch (Exception ex)
-        {
-            _errorMessage = ex.Message;
-            Console.WriteLine(ex.ToString());
-        }
-        finally
-        {
-            _prompt = "";
-            _processing = false;
-        }
-    }
+        
+        _processing = true;
+            StateHasChanged();
+        var api = new OpenAIClient(new OpenAIAuthentication(_apiKey, _organization));
+        var chatPrompts = CreateChatPrompts();
 
-    private void ShowError(string message)
+        var result = await api.ChatEndpoint.GetCompletionAsync(new ChatRequest(chatPrompts));
+        
+        AddMessage(_prompt, "user", result.Usage.PromptTokens);
+        AddMessage(result.FirstChoice.Message, "assistant", result.Usage.CompletionTokens);
+
+        _totalTokens += result.Usage.TotalTokens;
+        
+    }
+    catch (Exception ex)
     {
-        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
-        Snackbar.Configuration.SnackbarVariant = Variant.Filled;
-        Snackbar.Add(message, Severity.Error);
+        _errorMessage = ex.Message;
+        Console.WriteLine(ex.ToString());
     }
-
-    private List<ChatPrompt> CreateChatPrompts()
+    finally
     {
-        var chatPrompts = new List<ChatPrompt>
-        {
-            new("system", $"{TextRule}")
-        };
-
-        chatPrompts.AddRange(_messages.Select(item => new ChatPrompt(item.Role, item.Prompt)));
-        chatPrompts.Add(new ChatPrompt("user", _prompt));
-
-        return chatPrompts;
+        _prompt = "";
+        _processing = false;
+        StateHasChanged();
     }
+}
 
-    private void AddMessage(string prompt, string role, int tokens)
+private void ShowError(string message)
+{
+    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
+    Snackbar.Configuration.SnackbarVariant = Variant.Filled;
+    Snackbar.Add(message, Severity.Error);
+}
+
+private List<ChatPrompt> CreateChatPrompts()
+{
+    var chatPrompts = new List<ChatPrompt>
     {
-        _messages.Add(new Message
-        {
-            Prompt = prompt,
-            Role = role,
-            Tokens = tokens,
-            Date = DateTime.Now.ToString("T", new CultureInfo("fa-IR"))
-        });
-    }
+        new ChatPrompt("system", $"{TextRule}")
+    };
+
+    chatPrompts.AddRange(_messages.Select(item => new ChatPrompt(item.Role, item.Prompt)));
+    chatPrompts.Add(new ChatPrompt("user", _prompt));
+
+    return chatPrompts;
+}
+
+private void AddMessage(string prompt, string role, int tokens)
+{
+    _messages.Add(new Message
+    {
+        Prompt = prompt,
+        Role = role,
+        Tokens = tokens,
+        Date = DateTime.Now.ToString("T", new CultureInfo("fa-IR"))
+    });
+}
 
     async Task RestartChatGpt()
     {
