@@ -1,0 +1,116 @@
+﻿@page "/contact"
+@using MudBlazor
+@using Newtonsoft.Json
+@using System.Timers
+@inject HttpClient HttpClient
+
+<MudCard>
+    <MudCardContent>
+        <h3>صفحه تماس با ما</h3>
+        <MudGrid Justify="Justify.Center">
+            <MudItem xs="12" md="6">
+                <MudTextField Label="نام"
+                              Required="true"
+                              RequiredError="لطفاً نام خود را وارد کنید."
+                @bind-Value="name" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField Label="ایمیل"
+                              Required="true"
+                              RequiredError="لطفاً ایمیل خود را وارد کنید."
+                @bind-Value="email" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField Label="پیام"
+                              Required="true"
+                              RequiredError="لطفاً پیام خود را وارد کنید."
+                @bind-Value="message" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudButton Disabled="@isLoading" StartIcon="@Icons.Material.Filled.Send" OnClick="SendContactMessage" Variant="Variant.Filled" Color="Color.Primary">
+                    @if (isLoading)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                        <MudText Class="ms-2">در حال پردازش</MudText>
+                    }
+                    else
+                    {
+                        <MudText>ارسال</MudText>
+                    }
+                </MudButton>
+            </MudItem>
+            @if (isMessageSent)
+            {
+                {
+                    Snackbar.Add("پیام شما با موفقیت ثبت شد.", Severity.Success);
+                }
+            }
+        </MudGrid>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private string name;
+    private string email;
+    private string message;
+    private bool isMessageSent;
+    private bool isLoading;
+    private Timer timer;
+
+    private async Task SendContactMessage()
+    {
+    // Validate the form
+        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(message))
+        {
+            Snackbar.Add("تمامی موارد را تکمیل کنید", Severity.Error);
+            return;
+        }
+
+        // Check if the message can be sent based on the timer
+        if (timer != null && timer.Enabled)
+        {
+            return;
+        }
+
+        // Show the loading indicator
+        isLoading = true;
+
+        // Create a ContactMessage object
+        var contactMessage = new ContactMessage
+            {
+                Name = name,
+                Email = email,
+                Message = message,
+                IPAddress = await HttpClient.GetStringAsync("https://api.ipify.org")
+            };
+
+        // Read existing JSON data from the file (if any)
+        string existingJson = File.Exists("contact_messages.json") ? await File.ReadAllTextAsync("contact_messages.json") : "";
+
+        // Deserialize existing JSON data into a list of ContactMessage objects
+        var existingMessages = JsonConvert.DeserializeObject<List<ContactMessage>>(existingJson) ?? new List<ContactMessage>();
+
+        // Add the new message to the list
+        existingMessages.Add(contactMessage);
+
+        // Convert the updated list to JSON
+        var updatedJson = JsonConvert.SerializeObject(existingMessages,Formatting.Indented);
+
+        // Save the JSON data to the file
+        await File.WriteAllTextAsync("contact_messages.json", updatedJson);
+
+        // Hide the loading indicator
+        isLoading = false;
+
+        isMessageSent = true;
+    }
+
+    private class ContactMessage
+    {
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Message { get; set; }
+        public string IPAddress { get; set; }
+    }
+
+}

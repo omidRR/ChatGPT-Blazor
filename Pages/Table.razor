@@ -1,0 +1,74 @@
+﻿@page "/admin"
+@using System.Collections.Generic
+@using System.IO
+@using System.Text.Json
+@using Microsoft.AspNetCore.Components
+
+@if (data.Count > 0)
+{
+    <MudTable Items="@data">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Message</MudTh>
+            <MudTh>IPAddress</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@context.Email</MudTd>
+            <MudTd>@context.Message</MudTd>
+            <MudTd>@context.IPAddress</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteItem(context))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+else
+{
+    <MudAlert ContentAlignment="HorizontalAlignment.Center" Severity="Severity.Info">
+        <AlertTitle>پیامی یافت نشد</AlertTitle>
+    </MudAlert>
+}
+
+@code {
+    private List<Item> data = new List<Item>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+    // خواندن محتویات فایل JSON
+        var jsonContent = await File.ReadAllTextAsync("contact_messages.json");
+
+    // تجزیه فایل JSON و تبدیل آن به لیست از آیتم‌ها
+        var items = JsonSerializer.Deserialize<List<Item>>(jsonContent);
+
+    // اضافه کردن آیتم‌ها به متغیر data
+        data.AddRange(items);
+    }
+
+    private void DeleteItem(Item item)
+    {
+        data.Remove(item);
+        UpdateJsonFile();
+    }
+
+    private void UpdateJsonFile()
+    {
+        var jsonContent = JsonSerializer.Serialize(data);
+        File.WriteAllText("contact_messages.json", jsonContent);
+    }
+
+    public class Item
+    {
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Message { get; set; }
+        public string IPAddress { get; set; }
+    }
+}
